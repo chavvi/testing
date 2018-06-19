@@ -1,0 +1,11 @@
+{
+  "data":
+      [
+        {"crewId": "2345", "state": "mo", "crewLead": "M. Polk"},
+        {"crewId": "2345", "state": "mo", "crewLead": "A. Turner"},
+        {"crewId": "1875", "state": "mo", "crewLead": "R. Wilson"}
+      ],
+  "status": 200,
+  "success": true,
+  "errorMessage": ""
+ }

@@ -1,0 +1,16 @@
+{
+  "data":
+    {
+      "name": "C12345",
+      "givenName": "Opodopolous",
+      "lastName": "Jonathon",
+      "company": "AUE",
+      "employeeType": "C",
+      "employeeId": "12345",
+      "state": "MO",
+      "divisionCode": "060"
+    },
+  "status": 200,
+  "success": true,
+  "errorMessage": ""
+}

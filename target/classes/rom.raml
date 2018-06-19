@@ -1,0 +1,556 @@
+#%RAML 1.0
+---
+title: Remote Order Management API
+baseUri: http://localhost:8080/rom/{version}
+version: v1.2
+
+/employees:
+  /{employeeId}:
+    get:
+      description: Get employee info from Active Directory
+      responses:
+        200:
+          body:
+            application/json:
+              example:  |
+                {
+                  "data":
+                    {
+                      "name": "C12345",
+                      "givenName": "Opodopolous",
+                      "lastName": "Jonathon",
+                      "company": "AUE",
+                      "employeeType": "C",
+                      "employeeId": "12345",
+                      "state": "MO",
+                      "divisionCode": "060"
+                    },
+                  "status": 200,
+                  "success": true,
+                  "errorMessage": ""
+                }
+    /crews:
+      get:
+        description: Get a collection of Crews the Employee is a member of by Employee ID
+        responses:
+          200:
+            body:
+              application/json:
+                example:  |
+                  {
+                    "data":
+                        [
+                          {"crewId": "2345", "state": "mo", "crewLead": "M. Polk"},
+                          {"crewId": "2345", "state": "mo", "crewLead": "A. Turner"},
+                          {"crewId": "1875", "state": "mo", "crewLead": "R. Wilson"}
+                        ],
+                    "status": 200,
+                    "success": true,
+                    "errorMessage": ""
+                   }
+      /{crewId}:
+        get:
+          description: Validate crewId exists in eADMS
+          responses:
+            200:
+              body:
+                application/json:
+                  example:  |
+                    {
+                      "data":
+                          [
+                            {"crewId": "2345", "state": "mo", "crewLead": "M. Polk"}
+                          ],
+                      "status": 200,
+                      "success": true,
+                      "errorMessage": ""
+                    }
+/crews:
+  /{crewId}:
+      get:
+        description: Validate crewId exists in eADMS
+        responses:
+          200:
+            body:
+              application/json:
+                example:  |
+                  {
+                    "data":
+                        [
+                          {"crewId": "2345", "state": "mo", "crewLead": "M. Polk"}
+                        ],
+                    "status": 200,
+                    "success": true,
+                    "errorMessage": ""
+                  }
+  /employee:
+    /{employeeId}:  
+      get:
+        description: Get a collection of Crews the Employee is a member of by Employee ID
+        responses:
+          200:
+            body:
+              application/json:
+                example:  |
+                  {
+                    "data":
+                        [
+                          {"crewId": "2345", "state": "mo", "crewLead": "M. Polk"},
+                          {"crewId": "2345", "state": "mo", "crewLead": "A. Turner"},
+                          {"crewId": "1875", "state": "mo", "crewLead": "R. Wilson"}
+                        ],
+                    "status": 200,
+                    "success": true,
+                    "errorMessage": ""
+                   }
+/orders:
+  /codes:
+    /weather:
+      get:
+        description: Gets a collection of weather codes and descriptions to display to the user in dropdowns.
+        queryParameters: 
+          state:
+            description: The state in which the order was created.  Must call that state's outage system.
+            displayName: State
+            type: string
+            required: true
+            enum: [ mo, MO, il, IL ]
+            example: il
+        responses:
+          200:
+            body:
+              application/json:
+                example:  |
+                  {
+                    "data":
+                        [
+                          {
+                            "code": 123,
+                            "description": "Sun"
+                          },
+                          {
+                            "code": 122,
+                            "description": "Clouds"
+                          },
+                          {
+                            "code": 121,
+                            "description": "Rain"
+                          },
+                          {
+                            "code": 120,
+                            "description": "Snow"
+                          }
+                        ],
+                    "success": true,
+                    "status": 200,
+                    "errorMessage": ""
+                  }
+    /cause:
+      get:
+        description: Gets a collection of cause codes and descriptions to display to the user in dropdowns.
+        queryParameters: 
+          state:
+            description: The state in which the order was created.  Must call that state's outage system.
+            displayName: State
+            type: string
+            required: true
+            enum: [ mo, MO, il, IL ]
+            example: il
+        responses:
+          200:
+            body:
+              application/json:
+                example:  |
+                   {
+                    "data":
+                        [
+                          {
+                              "code": 10,
+                              "description": "Animal"
+                          },
+                          {
+                              "code": 11,
+                              "description": "Customer Equipment"
+                          },
+                          {
+                              "code": 12,
+                              "description": "Overhead Malfunction"
+                          },
+                          {
+                              "code": 13,
+                              "description": "Lightning"
+                          },
+                          {
+                              "code": 14,
+                              "description": "Sub Malfunction"
+                          },
+                          {
+                              "code": 15,
+                              "description": "Tree/Limb Broke"
+                          },
+                          {
+                              "code": 16,
+                              "description": "Tree Contact"
+                          },
+                          {
+                              "code": 17,
+                              "description": "Tree Trimmers"
+                          },
+                          {
+                              "code": 18,
+                              "description": "Operating error done by Sub Maint/Relay"
+                          },
+                          {
+                              "code": 19,
+                              "description": "AMR/AMI meter caused"
+                          },
+                          {
+                              "code": 20,
+                              "description": "Ameren dig in"
+                          },
+                          {
+                              "code": 21,
+                              "description": "false AMR meter outage"
+                          },
+                          {
+                              "code": 22,
+                              "description": "structure fire"
+                          },
+                          {
+                              "code": 23,
+                              "description": "Non-Ameren supply loss"
+                          },
+                          {
+                              "code": 24,
+                              "description": "Loss of Ameren transmission supply"
+                          },
+                          {
+                              "code": 25,
+                              "description": "No outage"
+                          },
+                          {
+                              "code": 26,
+                              "description": "Other Explain"
+                          },
+                          {
+                              "code": 27,
+                              "description": "Overloaded"
+                          },
+                          {
+                              "code": 28,
+                              "description": "Operating Error"
+                          },
+                          {
+                              "code": 29,
+                              "description": "Prearranged Outage"
+                          },
+                          {
+                              "code": 30,
+                              "description": "Public Excavation"
+                          },
+                          {
+                              "code": 31,
+                              "description": "Public non-vehicle"
+                          },
+                          {
+                              "code": 32,
+                              "description": "Public vehicle"
+                          },
+                          {
+                              "code": 33,
+                              "description": "Unknown-no failure"
+                          }
+                        ],
+                    "success": true,
+                    "status": 200,
+                    "errorMessage": ""
+                   }
+  /{orderNumber}:
+    get:
+      description: Get order details for the specified order number.
+      queryParameters: 
+        state:
+          description: The state in which the order was created.  Must call that state's outage system.
+          displayName: State
+          type: string
+          required: true
+          enum: [ mo, MO, il, IL ]
+          example: mo
+      responses:
+        200:
+          body:
+            application/json:
+              example:  |
+                {
+                  "data":
+                      {
+                        "admsOrderNumber": 12345678,
+                        "serviceAddress": "123 Main Street",
+                        "deviceId": "G34H3422HLR53",
+                        "deviceDescription": "Transformer",
+                        "phase": "A",
+                        "esrt": "2018-03-13 15:30:00",
+                        "verifyFlag": false,
+                        "weatherCode": 111,
+                        "verifiedDate": "2018-05-30T11:25:00",
+                        "dispatcherId": null,
+                        "causeCode": 10,
+                        "customersAffectedCount": 3,
+                        "outageComments":
+                        [
+                          "This is a free-form text field containing comments from customer, dispatch and crews that add information to the order",
+                          "This is a free-form text field containing comments from customer, dispatch and crews that add information to the order",
+                           "This is a free-form text field containing comments from customer, dispatch and crews that add information to the order"
+                         ] 
+                      }       
+                }
+    /device:
+      put:
+        description: Verify Device. Update the Order by Verifying the Device on the order is the proper Device causing the Outage
+        queryParameters: 
+          state:
+            description: The state in which the order was created.  Must call that state's outage system.
+            displayName: State
+            type: string
+            required: true
+            enum: [ mo, MO, il, IL ]
+            example: il
+        body:
+          application/json:
+            example:  |
+              {
+                "verify": true, 
+                "employeeId": "C123456",
+                "OrderLastUpdated": "2018/05/10 01:49:55"
+              }
+        responses:
+          200:
+            body:
+              application/json:
+                example:  |
+                  {
+                    "data":
+                        {
+                          "admsOrderNumber": 12345678,
+                          "serviceAddress": "123 Main Street",
+                          "deviceId": "G34H3422HLR53",
+                          "deviceDescription": "Transformer",
+                          "phase": "A",
+                          "esrt": "2018-04-09 15:30:00",
+                          "verifyFlag": true,
+                          "weatherCode": 111,
+                          "causeCode": 11,
+                          "customersAffectedCount": 234,
+                          "verifiedDate": "2018-05-30T11:25:00",
+                          "dispatcherId": null,
+                          "outageComments": "This is a free-form text field containing comments from customer, dispatch and crews that add information to the order."
+                        },
+                    "success": true,
+                    "status": 200,
+                    "errorMessage": ""
+                  }
+    /esrt:
+      put:
+        description: Update Estimated Safe Restoration Time for this order
+        queryParameters: 
+          state:
+            description: The state in which the order was created.  Must call that state's outage system.
+            displayName: State
+            type: string
+            required: true
+            enum: [ mo, MO, il, IL ]
+            example: il
+        body:
+          application/json:
+            example:  |
+              {
+                "esrt": "2018-04-09T10:51:19.000", 
+                "employeeId": "C123456",
+                "OrderLastUpdated": "2018/05/10 01:49:55"
+              }
+        responses:
+          200:
+            body:
+              application/json:
+                example:  |
+                  {
+                    "data":
+                        {
+                          "admsOrderNumber": 12345678,
+                          "serviceAddress": "123 Main Street",
+                          "deviceId": "G34H3422HLR53",
+                          "deviceDescription": "Transformer",
+                          "phase": "A",
+                          "esrt": "2018-04-09 15:30:00",
+                          "verifyFlag": false,
+                          "weatherCode": 123,
+                          "causeCode": 12,
+                          "customersAffectedCount": 234,
+                          "verifiedDate": "2018-05-30T11:25:00",
+                          "dispatcherId": null,
+                          "outageComments": "This is a free-form text field containing comments from customer, dispatch and crews that add information to the order."
+                        },
+                    "success": true,
+                    "status": 200,
+                    "errorMessage": ""
+                  }
+    /weather:
+      put:
+        description: Update Weather Code for this order
+        queryParameters: 
+          state:
+            description: The state in which the order was created.  Must call that state's outage system.
+            displayName: State
+            type: string
+            required: true
+            enum: [ mo, MO, il, IL ]
+            example: il
+        body:
+          application/json:
+            example:  |
+              {
+                "weatherCode": 123,
+                "employeeId": "C123456",
+                "OrderLastUpdated": "2018/05/10 01:49:55"
+              }
+        responses:
+          200:
+            body:
+              application/json:
+                example:  |
+                  {
+                    "data":
+                        {
+                          "admsOrderNumber": 12345678,
+                          "serviceAddress": "123 Main Street",
+                          "deviceId": "G34H3422HLR53",
+                          "deviceDescription": "Transformer",
+                          "phase": "A",
+                          "esrt": "2018-04-09 15:30:00",
+                          "verifyFlag": false,
+                          "weatherCode": 123,
+                          "causeCode": 12,
+                          "customersAffectedCount": 234,
+                          "verifiedDate": "2018-05-30T11:25:00",
+                          "dispatcherId": null,
+                          "outageComments": "This is a free-form text field containing comments from customer, dispatch and crews that add information to the order."
+                        },
+                    "success": true,
+                    "status": 200,
+                    "errorMessage": ""
+                  }
+    /cause:
+      put:
+        description: Update Cause Code for this order
+        queryParameters: 
+          state:
+            description: The state in which the order was created.  Must call that state's outage system.
+            displayName: State
+            type: string
+            required: true
+            enum: [ mo, MO, il, IL ]
+            example: mo
+        body:
+          application/json:
+            example:  |
+              {
+                "causeCode": 22,
+                "employeeId": "C123456",
+                "OrderLastUpdated": "2018/05/10 01:49:55"
+              }
+        responses:
+          200:
+            body:
+              application/json:
+                example:  |
+                  {
+                    "data":
+                        {
+                          "admsOrderNumber": 12345678,
+                          "serviceAddress": "123 Main Street",
+                          "deviceId": "G34H3422HLR53",
+                          "deviceDescription": "Transformer",
+                          "phase": "A",
+                          "esrt": "2018-04-09 15:30:00",
+                          "verifyFlag": false,
+                          "weatherCode": 123,
+                          "causeCode": 22,
+                          "customersAffectedCount": 234,
+                          "verifiedDate": "2018-05-30T11:25:00",
+                          "dispatcherId": null,
+                          "outageComments": "This is a free-form text field containing comments from customer, dispatch and crews that add information to the order."
+                        },
+                    "success": true,
+                    "status": 200,
+                    "errorMessage": ""
+                  }
+  /crews:
+    /{crewId}:
+      get:
+        description: Get a collection of orders assigned to a Crew
+        queryParameters: 
+          state:
+            description: The state in which the order was created.  Must call that state's outage system.
+            displayName: State
+            type: string
+            required: true
+            enum: [ mo, MO, il, IL ]
+            example: il
+        responses:
+          200:
+            body:
+              application/json:
+                example:  |
+                  {
+                    "data":
+                        [
+                          {
+                            "admsOrderNumber": 12345678,
+                            "serviceAddress": "123 Main Street",
+                            "deviceId": "G34H3422HLR53",
+                            "deviceDescription": "Transformer",
+                            "phase": "A",
+                            "esrt": "2018-03-13 15:30:00",
+                            "verifyFlag": false,
+                            "weatherCode": 123,
+                            "causeCode": 22,
+                            "customersAffectedCount": 24,
+                            "verifiedDate": "2018-05-30T11:25:00",
+                            "dispatcherId": null,
+                            "outageComments": "This is a free-form text field containing comments from customer, dispatch and crews that add information to the order."
+                          },
+                          {
+                            "admsOrderNumber": 5234324678,
+                            "serviceAddress": "1901 Chouteau",
+                            "deviceId": "GG997JHY6RY754R4",
+                            "deviceDescription": "Feeder",
+                            "phase": "ABC",
+                            "esrt": "2018-03-21 15:30:00",
+                            "verifyFlag": true,
+                            "weatherCode": 223,
+                            "causeCode": 332,
+                            "customersAffectedCount": 168,
+                            "verifiedDate": "2018-05-30T11:25:00",
+                            "dispatcherId": null,
+                            "outageComments": "This is a free-form text field containing comments from customer, dispatch and crews that add information to the order."
+                          },
+                          {
+                            "admsOrderNumber": 12345679,
+                            "serviceAddress": "234 Main Street",
+                            "deviceId": "H234H3SADFZK8",
+                            "deviceDescription": "Transformer",
+                            "phase": "B",
+                            "esrt": "2018-03-16 12:30:00",
+                            "verifyFlag": true,
+                            "weatherCode": 3321,
+                            "causeCode": 12,
+                            "customersAffectedCount": 88,
+                            "verifiedDate": "2018-05-30T11:25:00",
+                            "dispatcherId": null,
+                            "outageComments": "This is a free-form text field containing comments from customer, dispatch and crews that add information to the order."
+                          }
+                        ],
+                    "success": true,
+                    "status": 200,
+                    "errorMessage": ""
+                  }

@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:ws="http://www.mulesoft.org/schema/mule/ws" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ws http://www.mulesoft.org/schema/mule/ws/current/mule-ws.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+    <ws:consumer-config name="AuthServiceConsumer" wsdlLocation="AuthService.wsdl" service="AuthService" port="AuthServiceBinding" serviceAddress="http://appsprod/AuthService/AuthService.asmx" doc:name="Web Service Consumer"/>
+   <!--  <http:request-config name="HTTP_Request_Configuration_MUnit" host="0.0.0.0" port="8081" basePath="rom/v1.2/" doc:name="HTTP Request Configuration" config-ref-outbound="HTTP_Request_Configuration_MUnit" error-code="false" followRedirects="true" method="PUT" no-code="true" parseResponse="true" path-outbound="/orders/1338189/cause" requestStreamingMode="AUTO" sendBodyMode="AUTO" source="" success-code="false" target=""/> -->
+    <http:request-config name="HTTP_Request_Configuration_implementation" host="appstest" port="80" basePath="eadms-outageordermanagement" doc:name="HTTP Request Configuration"/>
+    <flow name="getcrewbyemployeeId">
+        <set-variable variableName="employeeId" value="#[message.inboundProperties.'http.uri.params'.employeeId]" doc:name="Variable"/>
+        <logger message="printemployeeid" level="INFO" doc:name="Logger"/>
+        <http:request config-ref="HTTP_Request_Configuration_implementation" path="/api/crewdetail/employee/#[flowVars.employeeId]" method="GET" doc:name="CrewbyEmployeeId">
+            <http:success-status-code-validator values="0..599"/>
+        </http:request>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+        <choice-exception-strategy doc:name="Choice Exception Strategy">
+            <catch-exception-strategy when="#[exception.causeMatches('com.mulesoft.weave.*')]" doc:name="Dataweave Exceptions">
+                <set-property propertyName="http.status" value="500" doc:name="Property"/>
+                <dw:transform-message doc:name="Transform Message">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	"status" : 500,
+	"message" : "Application Server Error"
+}]]></dw:set-payload>
+                </dw:transform-message>
+            </catch-exception-strategy>
+            <catch-exception-strategy doc:name="Data Unavailable -All Other Exceptions">
+                <dw:transform-message doc:name="Transform Message" metadata:id="d2dd5f77-da08-4c26-98d7-79e376c4b862">
+                    <dw:input-payload doc:sample="sample_data\string_1.dwl" mimeType="application/java"/>
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+status :payload.status when payload.status != null otherwise "400" default 400,
+message :payload.message when payload.message != null otherwise "invalid crew id",
+data : payload.data when payload.data != null otherwise "please pass valid data"
+} when (not payload is :string) otherwise {
+status : "400" default 400,
+message : payload,
+data :  "please "
+}]]></dw:set-payload>
+                </dw:transform-message>
+                <set-property propertyName="http.status" value="message.inboundProperties['http.status'] != empty ?  message.inboundProperties['http.status'] : '500'" doc:name="Property"/>
+            </catch-exception-strategy>
+        </choice-exception-strategy>
+
+    </flow>
+    <flow name="getcrewdetailsbycrewid">
+        <set-variable variableName="crewId" value="#[message.inboundProperties.'http.uri.params'.crewId]" doc:name="Variable"/>
+        <logger message="Idpassed" level="INFO" doc:name="Logger"/>
+        <http:request config-ref="HTTP_Request_Configuration_implementation" path="/api/crewdetail/crew/#[flowVars.crewId]" method="GET" doc:name="CrewByCrewId"/>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+    </flow>
+
+   <flow name="getCauseCodes">
+        <set-variable variableName="state" value="#[message.inboundProperties.'http.query.params'.state]" doc:name="stateVariable"/>
+        <logger level="INFO" doc:name="Logger" message="Querypassed"/>
+        <http:request config-ref="HTTP_Request_Configuration_implementation" path="/api/codes/cause?#[flowVars.state]" method="GET" doc:name="Causecode"/>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+        <dw:transform-message doc:name="causeCode" metadata:id="653f7480-b775-4570-a025-89da2251f4d1">
+            <dw:input-payload doc:sample="C:\Users\Q150134\Metadata\Causecode.json" mimeType="application/json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	data: payload.data map ((datum , indexOfDatum) -> {
+		code: datum.categoryNumber,
+		description: datum.causeName
+	})
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+    </flow>
+    <flow name="getWeatherCodes">
+        <set-variable variableName="state" value="#[message.inboundProperties.'http.query.params'.state]" doc:name="stateVariable"/>
+        <logger level="INFO" doc:name="Logger" message="Querypassed"/>
+        <http:request config-ref="HTTP_Request_Configuration_implementation" path="/api/codes/weather?#[flowVars.state]" method="GET" doc:name="HTTPWeatherCode"/>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+        <dw:transform-message doc:name="weatherCode" metadata:id="459c6330-2bde-41e7-8b00-aa48dd6980a2">
+            <dw:input-payload doc:sample="C:\Users\Q150134\Metadata\weatherCode.json" mimeType="application/json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	data: payload.data map {
+		code: $.categoryNumber,
+		description: $.causeName
+	}
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <logger message="#[payload]" level="INFO" doc:name="WeatherLogger"/>
+    </flow>
+    <flow name="getOrderbyOutageno">
+        <set-variable variableName="state" value="#[message.inboundProperties.'http.query.params'.state]" doc:name="stateVariable"/>
+        <set-variable variableName="orderNumber" value="#[message.inboundProperties.'http.uri.params'.orderNumber]" doc:name="orderNumberVariable"/>
+        <http:request config-ref="HTTP_Request_Configuration_implementation" path="/api/outageorder/#[flowVars.state]/#[flowVars.orderNumber]" method="GET" doc:name="OrderNumber"/>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+        <dw:transform-message doc:name="orderByOutageno" metadata:id="35710036-8f9b-407f-9ad0-f9b6bc21eb9e">
+            <dw:input-payload doc:sample="C:\Users\Q150134\Metadata\orderByOutageno.json" mimeType="application/json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	data: payload.data map {
+		admsOrderNumber: $.outageNumber,
+		serviceAddress: $.serviceAddress,
+		deviceId: $.deviceId,
+		deviceDescription: $.deviceCategory,
+		phase: $.phase,
+		esrt: $.estRestTime,
+		verifyFlag: $.verified,
+		weatherCode: $.weatherCode,
+		verifiedDate: $.verifiedDate,
+		dispatcherId: $.dispatcherId,
+		causeCode: $.causeCode,
+		customersAffectedCount: $.customersAffected,
+		outageComments: $.comments
+	}
+	
+	}]]></dw:set-payload>
+        </dw:transform-message>
+
+        <logger level="INFO" doc:name="Logger" message="#[payload]"/>
+        
+    </flow>
+    
+    <flow name="getOrdersByCrewId">
+        <set-variable variableName="state" value="#[message.inboundProperties.'http.query.params'.state]" doc:name="stateVariable"/>
+        <set-variable variableName="crewId" value="#[message.inboundProperties.'http.uri.params'.crewId]" doc:name="CrewVariable"/>
+        <logger message="#[message.inboundProperties.'http.uri.params'.crewId], #[message.inboundProperties.'http.query.params'.state]" level="INFO" doc:name="Logger"/>
+        <http:request config-ref="HTTP_Request_Configuration_implementation" path="/api/outageorder/crew/#[flowVars.state]/#[flowVars.crewid]" method="GET" doc:name="OrderbycrewId">
+             </http:request>
+
+        <byte-array-to-string-transformer doc:name="Byte Array to String" mimeType="application/xml"/>
+        <dw:transform-message doc:name="OrderByCrewid" metadata:id="e85d33d8-87bb-45c4-8784-dbe6a971d45b">
+            <dw:input-payload doc:sample="sample_data\json_1.json" mimeType="application/json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	data: payload.data map {
+		admsOrderNumber: $,
+		serviceAddress: "",
+		deviceId: "",
+		deviceDescription: "",
+		phase: "",
+		esrt: "",
+		verifyFlag: "",
+		weatherCode: "",
+		causeCode: "",
+		customersAffectedCount: "",
+		verifiedDate: "",
+		dispatcherId: "",
+		outageComments: ""
+	},
+	status: payload.status,
+	errorMessage: payload.message,
+	success: payload.success
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <logger level="INFO" doc:name="Logger" message="#[payload]"/>
+    </flow>
+    <flow name="putOrderVerifyDevice">
+        <set-variable variableName="state" value="#[message.inboundProperties.'http.query.params'.state]" doc:name="stateVariable"/>
+        <set-variable variableName="orderNumber" value="#[message.inboundProperties.'http.uri.params'.orderNumber]" doc:name="orderNumberVariable"/>
+        <logger message="#[message.inboundProperties.'http.query.params'.state], #[message.inboundProperties.'http.uri.params'.orderNumber]" level="INFO" doc:name="Logger"/>
+        <http:request config-ref="HTTP_Request_Configuration_implementation" path="/api/outageorder/verify/#[flowVars.state]/#[flowVars.orderNumber]" method="PATCH" doc:name="VerifyDevice"/>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+        <dw:transform-message doc:name="VerifyDevice" metadata:id="ac73422f-7f08-46f0-a47a-2884ca848b25">
+            <dw:input-payload doc:sample="C:\Users\Q150134\Metadata\VerifyDevice.json" mimeType="application/json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	data: payload.data map {
+		admsOrderNumber: $.outageNumber,
+		serviceAddress: $.serviceAddress,
+		deviceId: $.deviceId,
+		deviceDescription: $.deviceCategory,
+		phase: $.phase,
+		esrt: $.estRestTime,
+		verifyFlag: $.verified,
+		weatherCode: $.weatherCode,
+		causeCode: $.causeCode,
+		customersAffectedCount: $.customersAffected,
+		verifiedDate: $.verifiedDate,
+		dispatcherId: $.dispatcherId,
+		outageComments: $.comments
+	}
+}]]></dw:set-payload>
+        </dw:transform-message>
+  		<logger level="INFO" doc:name="Logger" message="#[payload]"/>
+    </flow>
+    <flow name="putOrderUpdateEsrt">
+        <set-variable variableName="state" value="#[message.inboundProperties.'http.query.params'.state]" doc:name="stateVariable"/>
+        <set-variable variableName="orderNumber" value="#[message.inboundProperties.'http.uri.params'.orderNumber]" doc:name="orderNumberVariable"/>
+        <logger message="#[message.inboundProperties.'http.query.params'.state], #[message.inboundProperties.'http.uri.params'.orderNumber]" level="INFO" doc:name="Logger"/>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+        <dw:transform-message doc:name="UpdateEsrt" metadata:id="71aca42f-65b3-4412-a67f-74a3348ed2b3">
+            <dw:input-payload doc:sample="C:\Users\Q150134\InputtUpdateWeather.json" mimeType="application/json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+payload map ((payload01 , indexOfPayload01) -> {
+	outageNumber: payload01.admsOrderNumber,
+	serviceAddress: payload01.serviceAddress,
+	deviceId: payload01.deviceId,
+	deviceCategory: payload01.deviceDescription,
+	phase: payload01.phase,
+	estRestTime: payload01.esrt,
+	causeCode: payload01.causeCode,
+	weatherCode: payload01.weatherCode,
+	verified: payload01.verifyFlag,
+	verifiedDate: payload01.verifiedDate,
+	comments: payload01.outageComments,
+	customersAffected: payload01.customersAffectedCount,
+	dispatcherId: payload01.dispatcherId
+})]]></dw:set-payload>
+        </dw:transform-message>
+        <http:request config-ref="HTTP_Request_Configuration_implementation" path="/api/outageorder/details/#[flowVars.state]/#[flowVars.orderNumber]" method="PATCH" doc:name="UpdateEsrt"/>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+        <dw:transform-message doc:name="UpdatedESRT" metadata:id="eefc0406-9638-4bf9-a970-ac5c449e3065">
+            <dw:input-payload doc:sample="C:\Users\Q150134\T2opOtptWeather.json" mimeType="application/json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	data: payload.data map {
+		admsOrderNumber: $.outageNumber,
+		serviceAddress: $.serviceAddress,
+		deviceId: $.deviceId,
+		deviceDescription: $.deviceCategory,
+		phase: $.phase,
+		esrt: $.estRestTime,
+		verifyFlag: $.verified,
+		weatherCode: $.weatherCode,
+		causeCode: $.causeCode,
+		customersAffectedCount: $.customersAffected,
+		verifiedDate: $.verifiedDate,
+		outageComments: $.comments
+	},
+	status: payload.status,
+	errorMessage: payload.message
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <logger level="INFO" doc:name="Logger" message="#[payload]"/>
+    </flow>
+    <flow name="putOrderUpdateCause">
+        <set-variable variableName="state" value="#[message.inboundProperties.'http.query.params'.state]" doc:name="stateVariable"/>
+        <set-variable variableName="orderNumber" value="#[message.inboundProperties.'http.uri.params'.orderNumber]" doc:name="orderNumberVariable"/>
+        <logger message="#[message.inboundProperties.'http.query.params'.state], #[message.inboundProperties.'http.uri.params'.orderNumber]" level="INFO" doc:name="Logger"/>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+        <dw:transform-message doc:name="UpdateCause" metadata:id="443a4b53-2180-42ab-8eca-f34beb9c2843">
+            <dw:input-payload doc:sample="C:\Users\Q150134\UpdateCause.json" mimeType="application/json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+payload map ((payload01 , indexOfPayload01) -> {
+	outageNumber: payload01.admsOrderNumber,
+	serviceAddress: payload01.serviceAddress,
+	deviceId: payload01.deviceId,
+	deviceCategory: payload01.deviceDescription,
+	phase: payload01.phase,
+	estRestTime: payload01.esrt,
+	causeCode: payload01.causeCode,
+	weatherCode: payload01.weatherCode,
+	verified: payload01.verifyFlag,
+	verifiedDate: payload01.verifiedDate,
+	comments: payload01.outageComments,
+	customersAffected: payload01.customersAffectedCount,
+	dispatcherId: payload01.dispatcherId
+})]]></dw:set-payload>
+        </dw:transform-message>
+        <http:request config-ref="HTTP_Request_Configuration_implementation" path="/api/outageorder/details/#[flowVars.state]/#[flowVars.orderNumber]" method="PATCH" doc:name="HTTPUpdateCause"/>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+        <dw:transform-message doc:name="UpdatedCause" metadata:id="f8eda98e-6878-4a43-8cd9-cae059066dfa">
+            <dw:input-payload doc:sample="C:\Users\Q150134\T2opOtptWeather.json" mimeType="application/json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	data: payload.data map {
+		admsOrderNumber: $.outageNumber,
+		serviceAddress: $.serviceAddress,
+		deviceId: $.deviceId,
+		deviceDescription: $.deviceCategory,
+		phase: $.phase,
+		esrt: $.estRestTime,
+		verifyFlag: $.verified,
+		weatherCode: $.weatherCode,
+		causeCode: $.causeCode,
+		customersAffectedCount: $.customersAffected,
+		verifiedDate: $.verifiedDate,
+		outageComments: $.comments
+	},
+	status: payload.status,
+	errorMessage: payload.message
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <logger level="INFO" doc:name="log final payload" message="#[payload]"/>
+    </flow>
+    <flow name="putOrderUpdateWeather">
+        <set-variable variableName="state" value="#[message.inboundProperties.'http.query.params'.state]" doc:name="stateVariable"/>
+        <set-variable variableName="orderNumber" value="#[message.inboundProperties.'http.uri.params'.orderNumber]" doc:name="orderNumberVariable"/>
+        <logger message="#[message.inboundProperties.'http.query.params'.state], #[message.inboundProperties.'http.uri.params'.orderNumber]" level="INFO" doc:name="Logger"/>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+        <dw:transform-message doc:name="UpdateWeather" metadata:id="5117d9b5-90aa-44b6-9bd0-4a4bca930a30">
+            <dw:input-payload doc:sample="sample_data\json.json" mimeType="application/json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+payload map ((payload01 , indexOfPayload01) -> {
+	outageNumber: payload01.admsOrderNumber,
+	serviceAddress: payload01.serviceAddress,
+	deviceId: payload01.deviceId,
+	deviceCategory: payload01.deviceDescription,
+	phase: payload01.phase,
+	estRestTime: payload01.esrt,
+	causeCode: payload01.causeCode,
+	weatherCode: payload01.weatherCode,
+	verified: payload01.verifyFlag,
+	verifiedDate: payload01.verifiedDate,
+	comments: payload01.outageComments,
+	customersAffected: payload01.customersAffectedCount,
+	dispatcherId: payload01.dispatcherId
+})]]></dw:set-payload>
+        </dw:transform-message>
+        <http:request config-ref="HTTP_Request_Configuration_implementation" path="/api/outageorder/details/#[flowVars.state]/#[flowVars.orderNumber]" method="PATCH" doc:name="UpdateWeather"/>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
+        <dw:transform-message doc:name="UpdatedWeather" metadata:id="b8e389e5-29a1-4980-92c8-4788855cef7e">
+            <dw:input-payload doc:sample="C:\Users\Q150134\T2opOtptWeather.json" mimeType="application/json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	data: payload.data map {
+		admsOrderNumber: $.outageNumber,
+		serviceAddress: $.serviceAddress,
+		deviceId: $.deviceId,
+		deviceDescription: $.deviceCategory,
+		phase: $.phase,
+		esrt: $.estRestTime,
+		verifyFlag: $.verified,
+		weatherCode: $.weatherCode,
+		causeCode: $.causeCode,
+		customersAffectedCount: $.customersAffected,
+		verifiedDate: $.verifiedDate,
+		outageComments: $.comments
+	},
+	status: payload.status,
+	errorMessage: payload.message
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <logger level="INFO" doc:name="Logger" message="#[payload]"/>
+    </flow>
+</mule>

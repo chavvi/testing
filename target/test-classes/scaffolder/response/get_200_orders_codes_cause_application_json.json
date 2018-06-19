@@ -1,0 +1,104 @@
+{
+ "data":
+     [
+       {
+           "code": 10,
+           "description": "Animal"
+       },
+       {
+           "code": 11,
+           "description": "Customer Equipment"
+       },
+       {
+           "code": 12,
+           "description": "Overhead Malfunction"
+       },
+       {
+           "code": 13,
+           "description": "Lightning"
+       },
+       {
+           "code": 14,
+           "description": "Sub Malfunction"
+       },
+       {
+           "code": 15,
+           "description": "Tree/Limb Broke"
+       },
+       {
+           "code": 16,
+           "description": "Tree Contact"
+       },
+       {
+           "code": 17,
+           "description": "Tree Trimmers"
+       },
+       {
+           "code": 18,
+           "description": "Operating error done by Sub Maint/Relay"
+       },
+       {
+           "code": 19,
+           "description": "AMR/AMI meter caused"
+       },
+       {
+           "code": 20,
+           "description": "Ameren dig in"
+       },
+       {
+           "code": 21,
+           "description": "false AMR meter outage"
+       },
+       {
+           "code": 22,
+           "description": "structure fire"
+       },
+       {
+           "code": 23,
+           "description": "Non-Ameren supply loss"
+       },
+       {
+           "code": 24,
+           "description": "Loss of Ameren transmission supply"
+       },
+       {
+           "code": 25,
+           "description": "No outage"
+       },
+       {
+           "code": 26,
+           "description": "Other Explain"
+       },
+       {
+           "code": 27,
+           "description": "Overloaded"
+       },
+       {
+           "code": 28,
+           "description": "Operating Error"
+       },
+       {
+           "code": 29,
+           "description": "Prearranged Outage"
+       },
+       {
+           "code": 30,
+           "description": "Public Excavation"
+       },
+       {
+           "code": 31,
+           "description": "Public non-vehicle"
+       },
+       {
+           "code": 32,
+           "description": "Public vehicle"
+       },
+       {
+           "code": 33,
+           "description": "Unknown-no failure"
+       }
+     ],
+ "success": true,
+ "status": 200,
+ "errorMessage": ""
+}

@@ -1,0 +1,21 @@
+{
+  "data":
+      {
+        "admsOrderNumber": 12345678,
+        "serviceAddress": "123 Main Street",
+        "deviceId": "G34H3422HLR53",
+        "deviceDescription": "Transformer",
+        "phase": "A",
+        "esrt": "2018-04-09 15:30:00",
+        "verifyFlag": false,
+        "weatherCode": 123,
+        "causeCode": 22,
+        "customersAffectedCount": 234,
+        "verifiedDate": "2018-05-30T11:25:00",
+        "dispatcherId": null,
+        "outageComments": "This is a free-form text field containing comments from customer, dispatch and crews that add information to the order."
+      },
+  "success": true,
+  "status": 200,
+  "errorMessage": ""
+}
